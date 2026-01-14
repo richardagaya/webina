@@ -1,5 +1,6 @@
 import { promises as fs } from 'fs'
 import path from 'path'
+import os from 'os'
 
 export interface Registration {
   id: string
@@ -11,7 +12,15 @@ export interface Registration {
   registeredAt: string
 }
 
-const DATA_DIR = path.join(process.cwd(), 'data')
+// In serverless environments (Vercel, AWS Lambda), use /tmp
+// In local development, use the data directory
+// 
+// ⚠️ WARNING: /tmp is ephemeral - data may be lost when function containers recycle.
+// For production, consider migrating to a database (Vercel KV, Postgres, MongoDB, etc.)
+const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME
+const DATA_DIR = isServerless 
+  ? path.join(os.tmpdir(), 'webinar-data')
+  : path.join(process.cwd(), 'data')
 const REGISTRATIONS_FILE = path.join(DATA_DIR, 'registrations.json')
 
 async function ensureDataDir() {
